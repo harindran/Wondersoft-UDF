@@ -21,6 +21,7 @@ namespace Common.Common
         }
         #endregion
 
+
         public void Intialize(string[] args)
         {
             try
