@@ -1,0 +1,146 @@
+
+/* IN HANA STUDIO RUN THIS QUERY*/
+
+ALTER PROCEDURE SBO_SP_TransactionNotification
+(
+in object_type nvarchar(30), 
+in transaction_type nchar(1),
+in num_of_cols_in_key int,
+in list_of_key_cols_tab_del nvarchar(255),
+in list_of_cols_val_tab_del nvarchar(255)
+)
+LANGUAGE SQLSCRIPT
+AS
+error int;
+error_message nvarchar (200);
+posreqid nvarchar(200);
+curreqid nvarchar(200);
+POSSync nvarchar(200);
+CurrDoc nvarchar(200);
+CurrValue nvarchar(200);
+RIType nvarchar(200);
+begin
+error := 0;
+error_message := N'Ok';
+ 
+if(:transaction_type='U' and :object_type='4') then
+select "U_CurrentKey" INTO curreqid from oitm where "ItemCode"=:list_of_cols_val_tab_del;
+select "U_POSReqId" INTO posreqid from oitm where "ItemCode"=:list_of_cols_val_tab_del;
+select "U_POSSync" INTO POSSync from oitm where "ItemCode"=:list_of_cols_val_tab_del;
+if(:posreqid = :curreqid  ) then
+update oitm set "U_POSReqId"= '',"U_POSSync"='N' where "ItemCode"=:list_of_cols_val_tab_del;
+else
+update oitm set "U_CurrentKey"= "U_POSReqId" where "ItemCode"=:list_of_cols_val_tab_del;
+End if;
+End if ;
+ 
+if(:transaction_type='U' and :object_type='64') then
+select "U_CurrentKey" INTO curreqid from owhs where "WhsCode"=:list_of_cols_val_tab_del;
+select "U_POSReqId" INTO posreqid from owhs where "WhsCode"=:list_of_cols_val_tab_del;
+if(:posreqid = :curreqid) then
+update owhs set "U_POSReqId"= '',"U_POSSync"='N' where "WhsCode"=:list_of_cols_val_tab_del;
+else
+update owhs set "U_CurrentKey"= "U_POSReqId" where "WhsCode"=:list_of_cols_val_tab_del;
+End if;
+End if ;
+ 
+if(:transaction_type='U' and :object_type='171') then
+select "U_CurrentKey" INTO curreqid from ohem where "empID"=:list_of_cols_val_tab_del;
+select "U_POSReqId" INTO posreqid from ohem where "empID"=:list_of_cols_val_tab_del;
+if(:posreqid = :curreqid) then
+update ohem set "U_POSReqId"= '' ,"U_POSSync"='N' where "empID"=:list_of_cols_val_tab_del;
+else
+update ohem set "U_CurrentKey"= "U_POSReqId" where "empID"=:list_of_cols_val_tab_del;
+End if;
+End if ;
+ 
+if(:transaction_type='U' and :object_type='1') then
+select "U_CurrentKey" INTO curreqid from oact where "AcctCode"=:list_of_cols_val_tab_del;
+select "U_POSReqId" INTO posreqid from oact where "AcctCode"=:list_of_cols_val_tab_del;
+if(:posreqid = :curreqid) then
+update oact set "U_POSReqId"= '',"U_POSSync"='N' where "AcctCode"=:list_of_cols_val_tab_del;
+else
+update oact set "U_CurrentKey"= "U_POSReqId" where "AcctCode"=:list_of_cols_val_tab_del;
+End if;
+End if ;
+ 
+ 
+if(:transaction_type='U' and :object_type='52') then
+select "U_CurrentKey" INTO curreqid from oitb where "ItmsGrpCod"=:list_of_cols_val_tab_del;
+select "U_POSReqId" INTO posreqid from oitb where "ItmsGrpCod"=:list_of_cols_val_tab_del;
+if(:posreqid = :curreqid) then
+update oitb set "U_POSReqId"= '',"U_POSSync"='N' where "ItmsGrpCod"=:list_of_cols_val_tab_del;
+else
+update oitb set "U_CurrentKey"= "U_POSReqId" where "ItmsGrpCod"=:list_of_cols_val_tab_del;
+End if;
+End if ;
+ 
+if(:transaction_type='U' and :object_type='2') then
+select "U_CurrentKey" INTO curreqid from OCRD where "CardCode"=:list_of_cols_val_tab_del;
+select "U_POSReqId" INTO posreqid from OCRD where "CardCode"=:list_of_cols_val_tab_del;
+if(:posreqid = :curreqid) then
+update OCRD set "U_POSReqId"= '',"U_POSSync"='N' where "CardCode"=:list_of_cols_val_tab_del;
+else
+update OCRD set "U_CurrentKey"= "U_POSReqId" where "CardCode"=:list_of_cols_val_tab_del;
+End if;
+End if ;
+ 
+if(:transaction_type='A' and :object_type='13') then
+update oinv  set "U_WSDN"= '' where "DocEntry"=:list_of_cols_val_tab_del;
+End if ;
+ 
+if(:transaction_type='A' and :object_type='67') then
+update oinv  set "U_WSDN"= '' where "DocEntry"=:list_of_cols_val_tab_del;
+End if ;
+if(:transaction_type='A' and :object_type='Stock Update') then
+select "U_DocEntry" INTO CurrDoc from "@STOCKUP"
+where "DocEntry"=:list_of_cols_val_tab_del;
+select "U_WSDN" INTO CurrValue from "@STOCKUP"
+where "DocEntry"=:list_of_cols_val_tab_del;
+select "U_Type" INTO RIType from "@STOCKUP"
+where "DocEntry"=:list_of_cols_val_tab_del;
+if (:RIType=1) then
+if(:Currdoc <>'' AND :CurrValue <>'' ) THEN
+UPDATE OIGN SET "U_WSDN"=:CurrValue  WHERE "DocEntry"=:Currdoc;
+END if;
+else
+if(:Currdoc <>'' AND :CurrValue <>'' ) THEN
+UPDATE OIGE SET "U_WSDN"=:CurrValue  WHERE "DocEntry"=:Currdoc;
+END if;
+EnD if;
+/* error=1;
+error_message  =  :CurrDoc || :currvalue ||:list_of_cols_val_tab_del || list_of_key_cols_tab_del; */
+END if;
+ 
+select :error, :error_message FROM dummy;
+END;
+
+---------------------------------------------------------------------------------------
+
+
+/* IN POST MAN */
+For Example :
+http://13.126.73.33:50001
+
+URL: http://xxxxx:yyyyy/b1s/v1/SQLQueries
+REQUEST BODY :1
+{
+"SqlCode":"OB_PriceListsPara",
+"SqlName":"QueryonPriceList",
+ "SqlText":"SELECT T2.ListNum  AS PriceListID,T2.ListName AS PriceListName,T1.ItemCode AS ProductCode,T1.Price AS Rate,T2.ValidFor AS Active FROM OITM  T0 left JOIN ITM1 T1 ON T0.ItemCode = T1.ItemCode left JOIN OPLN T2 ON T1.PriceList = T2.ListNum WHERE T1.Price <> '0' and T1.U_POSReqId=:U_POSReqId"
+}
+REQUEST BODY :2
+{
+"SqlCode":"OB_PriceLists",
+"SqlName":"QueryonPriceList",
+"SqlText":"SELECT T2.ListNum  AS PriceListID,T2.ListName AS PriceListName,T1.ItemCode AS ProductCode,T1.Price AS Rate,T2.ValidFor AS Active FROM OITM  T0 left JOIN ITM1 T1 ON T0.ItemCode = T1.ItemCode left JOIN OPLN T2 ON T1.PriceList = T2.ListNum WHERE T1.Price <> '0' "
+ }
+            
+
+
+
+
+
+
+
+
